@@ -154,8 +154,7 @@ body.tutoring main{padding-bottom:260px}
 <div class="card" id="box-grid">
   <h2 class="bt">Grid</h2>
   <p class="info" id="shape"></p>
-  <div class="two" id="shRow"><button class="alt" type="button" id="shc">Make square: keep columns</button><button class="alt" type="button" id="shr">Make square: keep rows</button></div>
-  <button class="alt" type="button" id="shb" style="margin-bottom:8px">Back to rectangle cells</button>
+  <button class="alt" type="button" id="shb" style="margin-bottom:8px"></button>
   <button class="alt" type="button" id="sqb" aria-pressed="false"></button>
   <input type="checkbox" id="sq" hidden>
   <div class="row" id="cellRow"><label>Cell size</label><div class="step"><button class="sb" data-t="cell" data-d="-1">−</button><input type="number" id="cell" step="any"><button class="sb" data-t="cell" data-d="1">+</button></div></div>
@@ -302,8 +301,8 @@ function doRender(){
   $('info').innerHTML=t;
   $('sqb').textContent='Auto-adjust rows and columns: '+($('sq').checked?'ON':'OFF');
   {const [W,H]=paperMM(),cw=W/S.cols,ch=H/S.rows,sqr=Math.abs(cw-ch)/Math.max(cw,ch)<0.005,u=+$('cu').value,ut=$('cu').selectedOptions[0].text;
-   $('shape').textContent=sqr?'Cells are squares.':'Cells are rectangles ('+fmt(+(cw/u).toFixed(2))+' × '+fmt(+(ch/u).toFixed(2))+' '+ut+').';
-   $('shRow').style.display=sqr?'none':'';$('shb').style.display=sqr&&S.prev?'':'none'}$('sqb').setAttribute('aria-pressed',$('sq').checked);
+   $('shape').textContent=sqr?'Your cells are squares.':'Your cells are rectangles ('+fmt(+(cw/u).toFixed(2))+' × '+fmt(+(ch/u).toFixed(2))+' '+ut+').';
+   $('shb').textContent=sqr?'Turn cells into rectangles':'Turn cells into squares'}$('sqb').setAttribute('aria-pressed',$('sq').checked);
   const sel=$('paper').selectedOptions[0];
   $('cap').textContent=($('paper').value==='custom'?'Custom':sel.text.replace(/ \(.*\)/,''))+' · '+fmt(+W.toFixed(1))+' × '+fmt(+H.toFixed(1))+' mm';
   const rw=+$('refw').value;
@@ -335,9 +334,12 @@ document.querySelectorAll('.sb[data-t]').forEach(b=>b.onclick=()=>{
 });
 $('sq').addEventListener('change',()=>{if($('sq').checked)fromCols();render()});
 $('sqb').onclick=()=>{$('sq').checked=!$('sq').checked;$('sq').dispatchEvent(new Event('change'))};
-$('shc').onclick=()=>{S.prev={cols:S.cols,rows:S.rows};fromCols();render()};
-$('shr').onclick=()=>{S.prev={cols:S.cols,rows:S.rows};fromRows();render()};
-$('shb').onclick=()=>{if(!S.prev)return;S.cols=S.prev.cols;S.rows=S.prev.rows;S.prev=null;$('cols').value=fmt(S.cols);$('rows').value=fmt(S.rows);syncCell();render()};
+$('shb').onclick=()=>{
+  const [W,H]=paperMM(),sqr=Math.abs(W/S.cols-H/S.rows)/Math.max(W/S.cols,H/S.rows)<0.005;
+  if(sqr){$('sq').checked=false;if(S.prev){S.cols=S.prev.cols;S.rows=S.prev.rows}else S.rows=S.rows/1.25;S.prev=null}
+  else{S.prev={cols:S.cols,rows:S.rows};S.rows=S.cols*H/W}
+  $('cols').value=fmt(S.cols);$('rows').value=fmt(S.rows);syncCell();render();
+};
 ['lw','lc','op','lab','gray'].forEach(id=>{$(id).addEventListener('input',render);$(id).addEventListener('change',render)});
 
 // ---- photo enhancement and brush ----
@@ -649,7 +651,7 @@ const TS=[
 ['file','Start here. Tap Choose reference photo and pick the picture you want to draw.'],
 ['paper','Paper size: pick the size of your real paper or canvas. Choose Custom size if yours is not listed.'],
 ['ori','Orientation turns the paper sideways (landscape) or upright (portrait).'],
-['shape','The app tells you whether your cells are squares or rectangles. If your columns and rows make rectangles, tap Make square to fix them, or Back to rectangle cells to undo.'],
+['shape','The app tells you whether your cells are squares or rectangles. Tap the button under it to turn them into the other shape.'],
 ['cellRow','Cell size sets how big each square is on your real paper. Tap \u2212 and + or type a number. The unit and step menus below it switch between cm, inches and mm.'],
 ['cols','Type exactly how many columns and rows you want. They stay independent. Tap Auto-adjust above if you want them to follow each other so the cells stay square.'],
 ['lw','Line width, color and opacity make the grid easy to see on your photo. The outline option helps on busy photos.'],
