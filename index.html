@@ -62,6 +62,15 @@ h2.bt{font-size:17px;margin:0 0 6px}
 #tut p{margin:0 0 8px}#tut #tc{font-size:12px;color:var(--mute)}
 #tut .two{margin-bottom:8px}
 body.tutoring main{padding-bottom:260px}
+#rate{display:none;position:fixed;right:0;top:32%;width:min(290px,calc(100vw - 24px));z-index:55;background:var(--card);border:1.5px solid var(--line);border-right:0;border-radius:14px 0 0 14px;padding:14px;box-shadow:0 6px 24px rgba(0,0,0,.35);transform:translateX(105%);transition:transform .35s}
+#rate.show{transform:none}
+#rate .x{position:absolute;top:4px;right:6px;width:36px;height:36px;margin:0;padding:0;background:transparent;color:var(--mute);font-size:22px}
+#rate .rt{font-weight:600;margin:0 30px 2px 0}
+#rate .rs{margin:0 0 6px;color:var(--mute);font-size:14px}
+#stars{display:flex;gap:2px;margin-bottom:8px}
+#stars button{width:44px;height:44px;margin:0;padding:0;background:transparent;font-size:28px;color:var(--line)}
+#stars button.on{color:#f5b301}
+#rate textarea{width:100%;box-sizing:border-box;margin-bottom:6px;font:inherit;border-radius:10px;border:1px solid var(--line);background:transparent;color:inherit;padding:8px}
 .tuthl{outline:3px solid var(--acc);outline-offset:4px;border-radius:10px;scroll-margin-top:70px}
 </style>
 </head>
@@ -74,6 +83,7 @@ body.tutoring main{padding-bottom:260px}
   <div class="chk"><input type="checkbox" id="tuton" checked><label for="tuton">Show the tutorial when I open the app</label></div>
   <button class="alt" id="replay">Replay tutorial now</button>
   <p class="info" style="margin-bottom:10px">Your photo, grid settings and brush strokes are saved on this device.</p>
+  <button class="alt" id="fbopen">Send feedback</button>
   <button class="alt" id="clr">Clear saved work</button>
 </div>
 
@@ -83,7 +93,7 @@ body.tutoring main{padding-bottom:260px}
 </div>
 
 <button id="lock">Unlock photo</button>
-<div id="nudge"><button class="sb" data-m="-1,0">←</button><button class="sb" data-m="0,-1">↑</button><button class="sb" data-m="0,1">↓</button><button class="sb" data-m="1,0">→</button><select id="ns"><option value="0.1">0.1 mm</option><option value="0.5">0.5 mm</option><option value="1" selected>1 mm</option><option value="2">2 mm</option><option value="5">5 mm</option></select><span>Size</span><button class="sb" data-s="-1">−</button><button class="sb" data-s="1">+</button></div>
+<div id="nudge"><button class="sb" data-m="-1,0">←</button><button class="sb" data-m="0,1">↑</button><button class="sb" data-m="0,-1">↓</button><button class="sb" data-m="1,0">→</button><select id="ns"><option value="0.1">0.1 mm</option><option value="0.5">0.5 mm</option><option value="1" selected>1 mm</option><option value="2">2 mm</option><option value="5">5 mm</option></select><span>Size</span><button class="sb" data-s="-1">−</button><button class="sb" data-s="1">+</button></div>
 <div class="card stage"><div id="vp"><canvas id="cv"></canvas></div><div class="capRow"><p class="info" id="cap"></p><button class="alt sm" id="fit">Fit view</button></div></div>
 
 <div class="card">
@@ -143,7 +153,8 @@ body.tutoring main{padding-bottom:260px}
 
 <div class="card" id="box-grid">
   <h2 class="bt">Grid</h2>
-  <div class="chk"><input type="checkbox" id="sq" checked><label for="sq">Square cells (rows follow columns)</label></div>
+  <button class="alt" type="button" id="sqb" aria-pressed="false"></button>
+  <input type="checkbox" id="sq" hidden>
   <div class="row" id="cellRow"><label>Cell size</label><div class="step"><button class="sb" data-t="cell" data-d="-1">−</button><input type="number" id="cell" step="any"><button class="sb" data-t="cell" data-d="1">+</button></div></div>
   <div class="row" id="unitRow"><label>Unit · step</label><select id="cu"><option value="25.4">in</option><option value="10" selected>cm</option><option value="1">mm</option></select><select id="cs"><option value="1">step 1</option><option value="0.5" selected>step 0.5</option><option value="0.1">step 0.1</option><option value="0.01">step 0.01</option><option value="0.001">step 0.001</option></select></div>
   <div class="row" id="preRow"><label>Quick sizes</label><select id="pre"><option value="">Choose a square size…</option><option value="0.5">0.5 cm</option><option value="1">1 cm</option><option value="2">2 cm</option><option value="2.5">2.5 cm</option><option value="3">3 cm</option><option value="5">5 cm</option><option value="1.27">0.5 inch</option><option value="2.54">1 inch</option><option value="5.08">2 inches</option><option value="7.62">3 inches</option><option value="10.16">4 inches</option><option value="12.7">5 inches</option></select></div>
@@ -157,7 +168,7 @@ body.tutoring main{padding-bottom:260px}
   <div class="chk"><input type="checkbox" id="lab" checked><label for="lab">Show row and column labels</label></div>
   <div class="row"><label>Line style</label><select id="ls"><option value="s">Solid</option><option value="d">Dashed</option></select></div>
   <div class="chk"><input type="checkbox" id="ac" checked><label for="ac">Outline lines so they show on any photo</label></div>
-  <div class="row"><label>Guides</label><select id="gd"><option value="">None</option><option value="c">Center lines</option><option value="d">Diagonals</option><option value="cd">Center + diagonals</option><option value="t">Rule of thirds</option></select></div>
+  <div class="row"><label>Guides</label><select id="gd"><option value="">None</option><option value="c">Center lines</option><option value="d">Diagonals</option><option value="cd">Center + diagonals</option><option value="t">Rule of thirds</option><option value="x">X in every square (diagonals)</option></select></div>
 </div>
 
 <div class="card" id="box-look">
@@ -193,6 +204,8 @@ body.tutoring main{padding-bottom:260px}
 
 <button id="save">Save grid image</button>
 </main>
+
+<div id="rate" role="dialog" aria-label="Rate Grid Maker"><button class="x" id="rx" aria-label="Close">×</button><p class="rt">Enjoying Grid Maker?</p><p class="rs">How would you rate it?</p><div id="stars" role="group" aria-label="Rating"><button type="button" data-s="1" aria-label="1 star">★</button><button type="button" data-s="2" aria-label="2 stars">★</button><button type="button" data-s="3" aria-label="3 stars">★</button><button type="button" data-s="4" aria-label="4 stars">★</button><button type="button" data-s="5" aria-label="5 stars">★</button></div><textarea id="rc" maxlength="500" rows="3" placeholder="Anything we should fix or add? (optional)"></textarea><p class="info" id="rm"></p><button id="rsend">Send</button><div class="two" style="margin-top:8px"><button class="alt" id="rlater">Later</button><button class="alt" id="rnever">Don’t ask again</button></div></div>
 
 <div id="tut" role="dialog" aria-live="polite"><p id="tc"></p><p id="tx"></p><div class="two"><button class="alt" id="tb">Back</button><button id="tn">Next</button></div><button class="alt sm" id="tk">Skip tutorial</button></div>
 
@@ -249,6 +262,8 @@ function draw(c,pw,ph,s,tx,ty,hair){
     if(g.includes('c')){c.moveTo(W/2,0);c.lineTo(W/2,H);c.moveTo(0,H/2);c.lineTo(W,H/2)}
     if(g.includes('d')){c.moveTo(0,0);c.lineTo(W,H);c.moveTo(W,0);c.lineTo(0,H)}
     if(g==='t')for(const f of[1/3,2/3]){c.moveTo(W*f,0);c.lineTo(W*f,H);c.moveTo(0,H*f);c.lineTo(W,H*f)}
+    if(g==='x'){c.lineWidth=lw;const nc=Math.ceil(S.cols-1e-6),nr=Math.ceil(S.rows-1e-6),i1=Math.min(ib,nc-1),j1=Math.min(jb,nr-1);
+      if((i1-ia+1)*(j1-ja+1)<=40000)for(let i=ia;i<=i1;i++)for(let j=ja;j<=j1;j++){const x=i*cwm,y=j*chm,w=Math.min(cwm,W-x),h=Math.min(chm,H-y);c.moveTo(x,y);c.lineTo(x+w,y+h);c.moveTo(x+w,y);c.lineTo(x,y+h)}}
     c.stroke()}
   c.setLineDash([]);
   if($('lab').checked&&Math.min(cwm,chm)*s>14){
@@ -282,7 +297,7 @@ function doRender(){
     if(rx>0.005||ry>0.005)t+=` Partial edge: ${rx>0.005?'last column '+f3(rx)+' '+ut+' wide':''}${rx>0.005&&ry>0.005?', ':''}${ry>0.005?'last row '+f3(ry)+' '+ut+' tall':''}.`;
   }else t=`Each cell is <b>${f3(cwm)} × ${f3(chm)} ${ut}</b>.`;
   $('info').innerHTML=t;
-  ['cellRow','unitRow','preRow'].forEach(id=>$(id).style.display=$('sq').checked?'flex':'none');
+  $('sqb').textContent='Auto-adjust rows and columns: '+($('sq').checked?'ON':'OFF');$('sqb').setAttribute('aria-pressed',$('sq').checked);
   const sel=$('paper').selectedOptions[0];
   $('cap').textContent=($('paper').value==='custom'?'Custom':sel.text.replace(/ \(.*\)/,''))+' · '+fmt(+W.toFixed(1))+' × '+fmt(+H.toFixed(1))+' mm';
   const rw=+$('refw').value;
@@ -298,8 +313,8 @@ function loadFile(f,R){
 }
 $('file').onchange=e=>{const f=e.target.files[0];if(f)loadFile(f)};
 
-function setCols(v){S.cols=Math.max(1,v||1);if($('sq').checked)fromCols();render()}
-function setRows(v){S.rows=Math.max(1,v||1);if($('sq').checked)fromRows();render()}
+function setCols(v){S.cols=Math.max(1,v||1);if($('sq').checked)fromCols();else syncCell();render()}
+function setRows(v){S.rows=Math.max(1,v||1);if($('sq').checked)fromRows();else syncCell();render()}
 $('cols').addEventListener('input',e=>setCols(+e.target.value));
 $('rows').addEventListener('input',e=>setRows(+e.target.value));
 document.querySelectorAll('.sb[data-t]').forEach(b=>b.onclick=()=>{
@@ -309,10 +324,11 @@ document.querySelectorAll('.sb[data-t]').forEach(b=>b.onclick=()=>{
   else{const st=+$('cs').value,u=+$('cu').value,v=Math.max(st,+((+$('cell').value||0)+d*st).toFixed(4));$('cell').value=v;setCell(v*u)}
 });
 ['paper','ori','cwid','chei','unit'].forEach(id=>{
-  const f=()=>{resetView();$('custom').style.display=$('paper').value==='custom'?'block':'none';if($('sq').checked)fromCols();render()};
+  const f=()=>{resetView();$('custom').style.display=$('paper').value==='custom'?'block':'none';if($('sq').checked)fromCols();else syncCell();render()};
   $(id).addEventListener('input',f);$(id).addEventListener('change',f);
 });
 $('sq').addEventListener('change',()=>{if($('sq').checked)fromCols();render()});
+$('sqb').onclick=()=>{$('sq').checked=!$('sq').checked;$('sq').dispatchEvent(new Event('change'))};
 ['lw','lc','op','lab','gray'].forEach(id=>{$(id).addEventListener('input',render);$(id).addEventListener('change',render)});
 
 // ---- photo enhancement and brush ----
@@ -625,9 +641,9 @@ const TS=[
 ['paper','Paper size: pick the size of your real paper or canvas. Choose Custom size if yours is not listed.'],
 ['ori','Orientation turns the paper sideways (landscape) or upright (portrait).'],
 ['cellRow','Cell size sets how big each square is on your real paper. Tap \u2212 and + or type a number. The unit and step menus below it switch between cm, inches and mm.'],
-['cols','Or choose how many columns and rows you want. There is no limit.'],
+['cols','Type exactly how many columns and rows you want. They stay independent. Tap Auto-adjust above if you want them to follow each other so the cells stay square.'],
 ['lw','Line width, color and opacity make the grid easy to see on your photo. The outline option helps on busy photos.'],
-['gd','Guides add center lines, diagonals or rule-of-thirds lines on top of the grid.'],
+['gd','Guides add center lines, diagonals, rule-of-thirds lines, or an X (two diagonals) inside every square.'],
 ['lock','The photo is locked so it will not move by accident. Tap Unlock photo to move or resize it, then lock it again.'],
 ['vp','Pinch with two fingers to zoom and drag to look around. Double-tap a square to zoom into it.'],
 ['auto','Auto-enhance improves light and contrast. Lower Enhance amount if the photo looks too strong.'],
@@ -669,6 +685,32 @@ $('tuton').onchange=()=>{try{$('tuton').checked?localStorage.removeItem(TKEY):lo
 $('gear').onclick=()=>{const s=$('set');s.style.display=s.style.display==='none'?'block':'none'};
 $('replay').onclick=()=>{$('set').style.display='none';tshow(0)};
 if(tutOn())setTimeout(()=>tshow(0),700);
+// ---- usage timer and rating popup ----
+const FB_URL='https://formspree.io/f/xljbdoea',rateEl=$('rate');let rv=0,rOpen=0;
+const lsg=(k,d)=>{try{const v=localStorage.getItem(k);return v===null?d:v}catch(e){return d}};
+const lss=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
+let useSec=+lsg('gm_use',0);
+function rpaint(){document.querySelectorAll('#stars button').forEach(b=>{b.classList.toggle('on',+b.dataset.s<=rv);b.setAttribute('aria-pressed',+b.dataset.s===rv)})}
+function rshow(){rOpen=1;rv=0;$('rc').value='';$('rm').textContent='Your rating and comment are sent to the app owner. Photos are never sent.';$('rsend').disabled=false;rpaint();rateEl.style.display='block';requestAnimationFrame(()=>rateEl.classList.add('show'))}
+function rhide(){rateEl.classList.remove('show');setTimeout(()=>{rateEl.style.display='none';rOpen=0},350)}
+setInterval(()=>{
+  if(document.visibilityState!=='visible')return;
+  useSec+=10;lss('gm_use',useSec);
+  if(!rOpen&&ti<0&&lsg('gm_rate','')===''&&useSec>=+lsg('gm_next',3600))rshow();
+},10000);
+document.querySelectorAll('#stars button').forEach(b=>b.onclick=()=>{rv=+b.dataset.s;rpaint()});
+$('rlater').onclick=$('rx').onclick=()=>{lss('gm_next',useSec+1800);rhide()};
+$('rnever').onclick=()=>{lss('gm_rate','never');rhide()};
+$('fbopen').onclick=()=>{$('set').style.display='none';rshow()};
+$('rsend').onclick=async()=>{
+  if(!rv){$('rm').textContent='Please tap a star first.';return}
+  $('rsend').disabled=true;$('rm').textContent='Sending…';
+  try{
+    const r=await fetch(FB_URL,{method:'POST',headers:{'Accept':'application/json','Content-Type':'application/json'},body:JSON.stringify({rating:rv,comment:$('rc').value.trim(),minutes_used:Math.round(useSec/60),app:'Grid Maker'})});
+    if(!r.ok)throw new Error('send failed');
+    lss('gm_rate','done');$('rm').textContent='Thank you! Your feedback was sent.';setTimeout(rhide,1800);
+  }catch(e){$('rm').textContent='Could not send. Check your internet and try again.';$('rsend').disabled=false}
+};
 </script>
 </body>
 </html>
