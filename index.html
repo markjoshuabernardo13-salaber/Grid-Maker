@@ -153,13 +153,12 @@ body.tutoring main{padding-bottom:260px}
 
 <div class="card" id="box-grid">
   <h2 class="bt">Grid</h2>
-  <button class="alt" type="button" id="shb" aria-pressed="false" style="margin-bottom:8px"></button>
+  <p class="info" id="shape"></p>
+  <div class="two" id="shRow"><button class="alt" type="button" id="shc">Make square: keep columns</button><button class="alt" type="button" id="shr">Make square: keep rows</button></div>
+  <button class="alt" type="button" id="shb" style="margin-bottom:8px">Back to rectangle cells</button>
   <button class="alt" type="button" id="sqb" aria-pressed="false"></button>
   <input type="checkbox" id="sq" hidden>
-  <input type="checkbox" id="rect" hidden>
   <div class="row" id="cellRow"><label>Cell size</label><div class="step"><button class="sb" data-t="cell" data-d="-1">−</button><input type="number" id="cell" step="any"><button class="sb" data-t="cell" data-d="1">+</button></div></div>
-  <div class="row" id="cellwRow" style="display:none"><label>Cell width</label><div class="step"><button class="sb" data-r="cellw" data-d="-1">−</button><input type="number" id="cellw" step="any"><button class="sb" data-r="cellw" data-d="1">+</button></div></div>
-  <div class="row" id="cellhRow" style="display:none"><label>Cell height</label><div class="step"><button class="sb" data-r="cellh" data-d="-1">−</button><input type="number" id="cellh" step="any"><button class="sb" data-r="cellh" data-d="1">+</button></div></div>
   <div class="row" id="unitRow"><label>Unit · step</label><select id="cu"><option value="25.4">in</option><option value="10" selected>cm</option><option value="1">mm</option></select><select id="cs"><option value="1">step 1</option><option value="0.5" selected>step 0.5</option><option value="0.1">step 0.1</option><option value="0.01">step 0.01</option><option value="0.001">step 0.001</option></select></div>
   <div class="row" id="preRow"><label>Quick sizes</label><select id="pre"><option value="">Choose a square size…</option><option value="0.5">0.5 cm</option><option value="1">1 cm</option><option value="2">2 cm</option><option value="2.5">2.5 cm</option><option value="3">3 cm</option><option value="5">5 cm</option><option value="1.27">0.5 inch</option><option value="2.54">1 inch</option><option value="5.08">2 inches</option><option value="7.62">3 inches</option><option value="10.16">4 inches</option><option value="12.7">5 inches</option></select></div>
   <div class="row"><label>Columns</label><div class="step"><button class="sb" data-t="cols" data-d="-1">−</button><input type="number" id="cols" min="1" step="any"><button class="sb" data-t="cols" data-d="1">+</button></div></div>
@@ -232,7 +231,7 @@ function paperMM(){
   return [w,h];
 }
 function colName(i){let s='';i++;while(i>0){const m=(i-1)%26;s=String.fromCharCode(65+m)+s;i=Math.floor((i-1)/26)}return s}
-function syncCell(){const [W,H]=paperMM(),u=+$('cu').value;$('cell').value=+(W/S.cols/u).toFixed(4);$('cellw').value=$('cell').value;$('cellh').value=+(H/S.rows/u).toFixed(4)}
+function syncCell(){const [W]=paperMM();$('cell').value=+(W/S.cols/+$('cu').value).toFixed(4)}
 function fromCols(){const [W,H]=paperMM();S.rows=S.cols*H/W;$('rows').value=fmt(S.rows);syncCell()}
 function fromRows(){const [W,H]=paperMM();S.cols=S.rows*W/H;$('cols').value=fmt(S.cols);syncCell()}
 
@@ -302,8 +301,9 @@ function doRender(){
   }else t=`Each cell is <b>${f3(cwm)} × ${f3(chm)} ${ut}</b>.`;
   $('info').innerHTML=t;
   $('sqb').textContent='Auto-adjust rows and columns: '+($('sq').checked?'ON':'OFF');
-  const rt=$('rect').checked;$('shb').textContent='Cell shape: '+(rt?'Rectangle':'Square')+' (tap to switch)';$('shb').setAttribute('aria-pressed',rt);
-  ['cellRow','preRow','sqb'].forEach(id=>$(id).style.display=rt?'none':'');['cellwRow','cellhRow'].forEach(id=>$(id).style.display=rt?'':'none');$('sqb').setAttribute('aria-pressed',$('sq').checked);
+  {const [W,H]=paperMM(),cw=W/S.cols,ch=H/S.rows,sqr=Math.abs(cw-ch)/Math.max(cw,ch)<0.005,u=+$('cu').value,ut=$('cu').selectedOptions[0].text;
+   $('shape').textContent=sqr?'Cells are squares.':'Cells are rectangles ('+fmt(+(cw/u).toFixed(2))+' × '+fmt(+(ch/u).toFixed(2))+' '+ut+').';
+   $('shRow').style.display=sqr?'none':'';$('shb').style.display=sqr&&S.prev?'':'none'}$('sqb').setAttribute('aria-pressed',$('sq').checked);
   const sel=$('paper').selectedOptions[0];
   $('cap').textContent=($('paper').value==='custom'?'Custom':sel.text.replace(/ \(.*\)/,''))+' · '+fmt(+W.toFixed(1))+' × '+fmt(+H.toFixed(1))+' mm';
   const rw=+$('refw').value;
@@ -335,10 +335,9 @@ document.querySelectorAll('.sb[data-t]').forEach(b=>b.onclick=()=>{
 });
 $('sq').addEventListener('change',()=>{if($('sq').checked)fromCols();render()});
 $('sqb').onclick=()=>{$('sq').checked=!$('sq').checked;$('sq').dispatchEvent(new Event('change'))};
-$('shb').onclick=()=>{const r=$('rect');r.checked=!r.checked;if(r.checked)$('sq').checked=false;else fromCols();syncCell();render()};
-function rectSet(t){const [W,H]=paperMM(),u=+$('cu').value,mm=+$(t).value*u;if(!(mm>0.01))return;if(t==='cellw')S.cols=W/mm;else S.rows=H/mm;$('cols').value=fmt(S.cols);$('rows').value=fmt(S.rows);if(t==='cellw')$('cellh').value=+(H/S.rows/u).toFixed(4);else $('cellw').value=+(W/S.cols/u).toFixed(4);$('cell').value=$('cellw').value;render()}
-['cellw','cellh'].forEach(id=>$(id).addEventListener('input',()=>rectSet(id)));
-document.querySelectorAll('.sb[data-r]').forEach(b=>b.onclick=()=>{const t=b.dataset.r,st=+$('cs').value,v=Math.max(st,+((+$(t).value||0)+(+b.dataset.d)*st).toFixed(4));$(t).value=v;rectSet(t)});
+$('shc').onclick=()=>{S.prev={cols:S.cols,rows:S.rows};fromCols();render()};
+$('shr').onclick=()=>{S.prev={cols:S.cols,rows:S.rows};fromRows();render()};
+$('shb').onclick=()=>{if(!S.prev)return;S.cols=S.prev.cols;S.rows=S.prev.rows;S.prev=null;$('cols').value=fmt(S.cols);$('rows').value=fmt(S.rows);syncCell();render()};
 ['lw','lc','op','lab','gray'].forEach(id=>{$(id).addEventListener('input',render);$(id).addEventListener('change',render)});
 
 // ---- photo enhancement and brush ----
@@ -606,7 +605,7 @@ $('pdfsave').onclick=async()=>{
 let wl=null;
 async function keepAwake(){try{if('wakeLock' in navigator)wl=await navigator.wakeLock.request('screen')}catch(e){}}
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&img)keepAwake()});
-const IDS=['paper','ori','cwid','chei','unit','sq','rect','cu','cs','lw','lc','op','lab','gray','ls','ac','gd','post','auto','aes','refw','bt','bs','bst'];
+const IDS=['paper','ori','cwid','chei','unit','sq','cu','cs','lw','lc','op','lab','gray','ls','ac','gd','post','auto','aes','refw','bt','bs','bst'];
 const db=()=>new Promise((ok,no)=>{try{const r=indexedDB.open('gridmaker',1);r.onupgradeneeded=()=>r.result.createObjectStore('s');r.onsuccess=()=>ok(r.result);r.onerror=no}catch(e){no(e)}});
 const idbPut=(k,v)=>db().then(d=>{d.transaction('s','readwrite').objectStore('s').put(v,k)}).catch(()=>{});
 let pTm=0;
@@ -650,7 +649,7 @@ const TS=[
 ['file','Start here. Tap Choose reference photo and pick the picture you want to draw.'],
 ['paper','Paper size: pick the size of your real paper or canvas. Choose Custom size if yours is not listed.'],
 ['ori','Orientation turns the paper sideways (landscape) or upright (portrait).'],
-['shb','Cell shape switches between square cells and rectangle cells. In rectangle mode you type the cell width and height separately.'],
+['shape','The app tells you whether your cells are squares or rectangles. If your columns and rows make rectangles, tap Make square to fix them, or Back to rectangle cells to undo.'],
 ['cellRow','Cell size sets how big each square is on your real paper. Tap \u2212 and + or type a number. The unit and step menus below it switch between cm, inches and mm.'],
 ['cols','Type exactly how many columns and rows you want. They stay independent. Tap Auto-adjust above if you want them to follow each other so the cells stay square.'],
 ['lw','Line width, color and opacity make the grid easy to see on your photo. The outline option helps on busy photos.'],
